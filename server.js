@@ -34,9 +34,21 @@ if (!BASE_URL) {
 
 const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || `${BASE_URL}/auth/google/callback`;
 
+// Debug logging
+console.log('=== OAuth Configuration Debug ===');
+console.log('GOOGLE_CLIENT_ID present:', !!CLIENT_ID, CLIENT_ID ? CLIENT_ID.substring(0, 20) + '...' : 'MISSING');
+console.log('GOOGLE_CLIENT_SECRET present:', !!CLIENT_SECRET, CLIENT_SECRET ? '***' : 'MISSING');
+console.log('BASE_URL:', BASE_URL);
+console.log('REDIRECT_URI:', REDIRECT_URI);
+console.log('VERCEL_URL:', process.env.VERCEL_URL);
+console.log('================================');
+
 let oAuth2Client = null;
 if (CLIENT_ID && CLIENT_SECRET) {
     oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+    console.log('✅ OAuth2Client initialized');
+} else {
+    console.error('❌ OAuth2Client NOT initialized - missing credentials');
 }
 
 // Middleware
@@ -150,7 +162,13 @@ function requireAuth(req, res, next) {
 
 // Routes
 app.get('/api/health', async (req, res) => {
-    res.json({ status: 'ok', mcpConnected: !!mcpClient });
+    res.json({
+        status: 'ok',
+        mcpConnected: !!mcpClient,
+        oAuthConfigured: !!oAuth2Client,
+        clientIdSet: !!CLIENT_ID,
+        clientSecretSet: !!CLIENT_SECRET
+    });
 });
 
 app.get('/auth/login', (req, res) => {
