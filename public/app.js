@@ -9,10 +9,20 @@ let currentEndDate = null;
 
 // API helper
 function getApiUrl(endpoint) {
-    const baseUrl = window.location.hostname === 'localhost'
-        ? 'http://localhost:3001'
-        : `${window.location.protocol}//${window.location.host.replace('github.io', 'cloudfunctions.net')}`;
-    return `${baseUrl}${endpoint}`;
+    // For Vercel: same domain, use relative URLs
+    // For localhost: use http://localhost:3001
+    // For GitHub Pages + Cloud Run: use cloud run URL
+    if (window.location.hostname === 'localhost') {
+        return `http://localhost:3001${endpoint}`;
+    } else if (window.location.hostname.includes('vercel.app')) {
+        // Vercel: use relative URLs (same domain)
+        return endpoint;
+    } else if (window.location.hostname.includes('github.io')) {
+        // GitHub Pages: use Cloud Run backend
+        return `${window.location.protocol}//ga4-dashboard-xxxxx.run.app${endpoint}`;
+    }
+    // Default: relative URL
+    return endpoint;
 }
 
 // Initialize

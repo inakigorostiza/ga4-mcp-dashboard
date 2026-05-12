@@ -140,10 +140,14 @@
     <script>
         // Set up API URL routing
         function getApiUrl(endpoint) {
-            const baseUrl = window.location.hostname === 'localhost'
-                ? 'http://localhost:3001'
-                : `${window.location.protocol}//${window.location.host.replace('github.io', 'cloudfunctions.net')}`;
-            return `${baseUrl}${endpoint}`;
+            if (window.location.hostname === 'localhost') {
+                return `http://localhost:3001${endpoint}`;
+            } else if (window.location.hostname.includes('vercel.app')) {
+                return endpoint;
+            } else if (window.location.hostname.includes('github.io')) {
+                return `${window.location.protocol}//ga4-dashboard-xxxxx.run.app${endpoint}`;
+            }
+            return endpoint;
         }
         // Update login link on page load
         document.addEventListener('DOMContentLoaded', () => {

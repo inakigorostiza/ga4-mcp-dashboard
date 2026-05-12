@@ -1,0 +1,58 @@
+{
+  "name": "ga4-dashboard",
+  "version": 2,
+  "buildCommand": "npm install",
+  "framework": "nodejs",
+  "installCommand": "npm install",
+  "nodeVersion": "20.x",
+  "public": true,
+  "github": {
+    "enabled": true,
+    "autoAlias": true,
+    "autoExposeSystemEnvs": true
+  },
+  "env": [
+    {
+      "key": "GOOGLE_CLIENT_ID",
+      "description": "Google OAuth Client ID"
+    },
+    {
+      "key": "GOOGLE_CLIENT_SECRET",
+      "description": "Google OAuth Client Secret"
+    },
+    {
+      "key": "SESSION_SECRET",
+      "description": "Session encryption secret"
+    },
+    {
+      "key": "GOOGLE_CLOUD_PROJECT",
+      "description": "Google Cloud Project ID",
+      "value": ""
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/server.js"
+    },
+    {
+      "source": "/auth/(.*)",
+      "destination": "/server.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/server.js"
+    }
+  ]
+}
