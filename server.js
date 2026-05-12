@@ -19,7 +19,8 @@ const USER_CREDS_PATH = path.join(DATA_DIR, '.user_credentials.json');
 // OAuth Configuration
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const BASE_URL = process.env.BASE_URL || (IS_CLOUD_RUN ? 'https://ga4-dashboard.lin3s.cloud' : `http://localhost:${PORT}`);
+const BASE_URL = process.env.BASE_URL ||
+    (IS_CLOUD_RUN ? `https://${process.env.CLOUD_RUN_SERVICE_HOST || 'ga4-dashboard.cloudfunctions.net'}` : `http://localhost:${PORT}`);
 const REDIRECT_URI = `${BASE_URL}/auth/google/callback`;
 
 let oAuth2Client = null;
@@ -29,12 +30,39 @@ if (CLIENT_ID && CLIENT_SECRET) {
 
 // Middleware
 app.use(express.json());
+
+// CORS configuration
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    process.env.FRONTEND_URL || 'https://inakigorostiza.github.io'
+];
+
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    }
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(express.static('public'));
 app.use(session({
     secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
     resave: false,
     saveUninitialized: true,
-    cookie: { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }
+    cookie: {
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'none',
+        secure: true
+    }
 }));
 
 // MCP Client instance

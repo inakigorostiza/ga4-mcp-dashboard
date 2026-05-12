@@ -131,12 +131,25 @@
                 <div class="login-card">
                     <h2>GA4 Dashboard</h2>
                     <p>Sign in with Google to view your analytics</p>
-                    <a href="/auth/login" class="login-btn">Sign in with Google</a>
+                    <a id="loginLink" href="/auth/login" class="login-btn">Sign in with Google</a>
                 </div>
             </div>
         </main>
     </div>
 
+    <script>
+        // Set up API URL routing
+        function getApiUrl(endpoint) {
+            const baseUrl = window.location.hostname === 'localhost'
+                ? 'http://localhost:3001'
+                : `${window.location.protocol}//${window.location.host.replace('github.io', 'cloudfunctions.net')}`;
+            return `${baseUrl}${endpoint}`;
+        }
+        // Update login link on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('loginLink').href = getApiUrl('/auth/login');
+        });
+    </script>
     <script src="app.js"></script>
 </body>
 </html>

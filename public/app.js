@@ -7,6 +7,14 @@ let currentProperty = null;
 let currentStartDate = null;
 let currentEndDate = null;
 
+// API helper
+function getApiUrl(endpoint) {
+    const baseUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:3001'
+        : `${window.location.protocol}//${window.location.host.replace('github.io', 'cloudfunctions.net')}`;
+    return `${baseUrl}${endpoint}`;
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
@@ -15,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function checkAuth() {
     try {
-        const response = await fetch('/auth/status');
+        const response = await fetch(getApiUrl('/auth/status'));
         const data = await response.json();
 
         if (data.loggedIn) {
@@ -39,7 +47,7 @@ async function checkAuth() {
 
 async function loadProperties() {
     try {
-        const response = await fetch('/api/properties', { credentials: 'include' });
+        const response = await fetch(getApiUrl('/api/properties'), { credentials: 'include' });
         console.log('Properties response status:', response.status);
 
         if (!response.ok) {
@@ -140,7 +148,7 @@ function setupEventListeners() {
     });
 
     document.getElementById('logoutBtn').addEventListener('click', () => {
-        window.location.href = '/auth/logout';
+        window.location.href = getApiUrl('/auth/logout');
     });
 }
 
@@ -158,8 +166,8 @@ async function loadDashboard() {
         });
 
         const [metricsRes, pagesRes] = await Promise.all([
-            fetch(`/api/metrics?${params}`, { credentials: 'include' }),
-            fetch(`/api/top-pages?${params}`, { credentials: 'include' })
+            fetch(getApiUrl(`/api/metrics?${params}`), { credentials: 'include' }),
+            fetch(getApiUrl(`/api/top-pages?${params}`), { credentials: 'include' })
         ]);
 
         if (!metricsRes.ok || !pagesRes.ok) {
