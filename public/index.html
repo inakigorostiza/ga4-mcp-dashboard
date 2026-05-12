@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GA4 Traffic Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="navbar-left">
+                <div class="logo">G</div>
+                <span class="brand">GA4 Dashboard</span>
+            </div>
+            <div class="navbar-center">
+                <select id="propertySelect" class="property-select">
+                    <option value="">Loading properties...</option>
+                </select>
+                <div class="date-presets">
+                    <button class="preset-btn" data-preset="7">7d</button>
+                    <button class="preset-btn active" data-preset="30">30d</button>
+                    <button class="preset-btn" data-preset="90">90d</button>
+                    <button class="preset-btn" data-preset="custom">Custom</button>
+                </div>
+                <div id="customDatePicker" class="custom-date-picker" style="display: none;">
+                    <input type="date" id="startDate" />
+                    <span>to</span>
+                    <input type="date" id="endDate" />
+                    <button id="applyDateBtn" class="apply-btn">Apply</button>
+                </div>
+            </div>
+            <div class="navbar-right">
+                <div id="userInfo" class="user-info"></div>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="main-content">
+            <!-- Loading state -->
+            <div id="loadingState" class="loading-state" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading dashboard...</p>
+            </div>
+
+            <!-- Dashboard content -->
+            <div id="dashboardContent" class="dashboard-content" style="display: none;">
+                <!-- Charts section -->
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <div>
+                                <h3>Sessions &amp; Users over time</h3>
+                                <p class="subtitle" id="dateRange"></p>
+                            </div>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-color" style="background:#1a73e8;"></span>Sessions</span>
+                                <span class="legend-item"><span class="legend-color" style="border-bottom:2px dashed #34a853;"></span>Users</span>
+                            </div>
+                        </div>
+                        <canvas id="trendChart" height="100"></canvas>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <div>
+                                <h3>Traffic channels</h3>
+                                <p class="subtitle">Sessions by channel group</p>
+                            </div>
+                        </div>
+                        <div class="channel-container">
+                            <canvas id="channelChart" width="100" height="100"></canvas>
+                            <div id="channelLegend" class="channel-legend"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI tiles -->
+                <div class="kpi-grid">
+                    <div class="kpi-tile">
+                        <div class="kpi-label">Sessions</div>
+                        <div class="kpi-value" id="kpiSessions">—</div>
+                        <div class="kpi-delta" id="kpiSessionsDelta"></div>
+                    </div>
+                    <div class="kpi-tile">
+                        <div class="kpi-label">Users</div>
+                        <div class="kpi-value" id="kpiUsers">—</div>
+                        <div class="kpi-delta" id="kpiUsersDelta"></div>
+                    </div>
+                    <div class="kpi-tile">
+                        <div class="kpi-label">New Users</div>
+                        <div class="kpi-value" id="kpiNewUsers">—</div>
+                        <div class="kpi-delta" id="kpiNewUsersDelta"></div>
+                    </div>
+                    <div class="kpi-tile">
+                        <div class="kpi-label">Pageviews</div>
+                        <div class="kpi-value" id="kpiPageviews">—</div>
+                        <div class="kpi-delta" id="kpiPageviewsDelta"></div>
+                    </div>
+                </div>
+
+                <!-- Top pages table -->
+                <div class="table-card">
+                    <div class="card-header">
+                        <h3>Top 10 pages by sessions</h3>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Page path</th>
+                                <th>Sessions</th>
+                                <th>Users</th>
+                                <th>Pageviews</th>
+                                <th>Engagement rate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topPagesBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center;color:#80868b;">No data</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Login prompt -->
+            <div id="loginPrompt" class="login-prompt">
+                <div class="login-card">
+                    <h2>GA4 Dashboard</h2>
+                    <p>Sign in with Google to view your analytics</p>
+                    <a href="/auth/login" class="login-btn">Sign in with Google</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
