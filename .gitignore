@@ -5,3 +5,4 @@ node_modules/
 *.log
 .user_credentials.json
 .superpowers/
+.vercel

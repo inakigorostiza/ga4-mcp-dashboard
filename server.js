@@ -19,9 +19,20 @@ const USER_CREDS_PATH = path.join(DATA_DIR, '.user_credentials.json');
 // OAuth Configuration
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const BASE_URL = process.env.BASE_URL ||
-    (IS_CLOUD_RUN ? `https://${process.env.CLOUD_RUN_SERVICE_HOST || 'ga4-dashboard.cloudfunctions.net'}` : `http://localhost:${PORT}`);
-const REDIRECT_URI = `${BASE_URL}/auth/google/callback`;
+
+// Determine BASE_URL based on environment
+let BASE_URL = process.env.BASE_URL;
+if (!BASE_URL) {
+    if (IS_CLOUD_RUN) {
+        BASE_URL = `https://${process.env.CLOUD_RUN_SERVICE_HOST || 'ga4-dashboard.cloudfunctions.net'}`;
+    } else if (process.env.VERCEL_URL) {
+        BASE_URL = `https://${process.env.VERCEL_URL}`;
+    } else {
+        BASE_URL = `http://localhost:${PORT}`;
+    }
+}
+
+const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || `${BASE_URL}/auth/google/callback`;
 
 let oAuth2Client = null;
 if (CLIENT_ID && CLIENT_SECRET) {
@@ -35,8 +46,10 @@ app.use(express.json());
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
+    'https://ga4-dashboard-two.vercel.app',
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
     process.env.FRONTEND_URL || 'https://inakigorostiza.github.io'
-];
+].filter(Boolean);
 
 app.use((req, res, next) => {
     const origin = req.headers.origin;
