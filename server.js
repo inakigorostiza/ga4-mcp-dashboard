@@ -101,13 +101,15 @@ async function initializeMCP() {
 
         let credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-        // Try different credential sources in order
-        if (fs.existsSync(USER_CREDS_PATH)) {
-            console.log('Using authenticated user credentials from .user_credentials.json');
-            credentialsPath = USER_CREDS_PATH;
-        } else if (fs.existsSync(path.join(os.homedir(), '.config/gcloud/application_default_credentials.json'))) {
-            credentialsPath = path.join(os.homedir(), '.config/gcloud/application_default_credentials.json');
-            console.log('Using gcloud application default credentials');
+        // Try different credential sources in order (only on local/cloud-run)
+        if (!IS_CLOUD_RUN && !process.env.VERCEL_URL) {
+            if (fs.existsSync(USER_CREDS_PATH)) {
+                console.log('Using authenticated user credentials from .user_credentials.json');
+                credentialsPath = USER_CREDS_PATH;
+            } else if (fs.existsSync(path.join(os.homedir(), '.config/gcloud/application_default_credentials.json'))) {
+                credentialsPath = path.join(os.homedir(), '.config/gcloud/application_default_credentials.json');
+                console.log('Using gcloud application default credentials');
+            }
         }
 
         const env = { ...process.env };
@@ -136,7 +138,11 @@ async function initializeMCP() {
         console.log('✅ Analytics MCP connection established successfully');
         return true;
     } catch (error) {
-        console.error('❌ Failed to initialize MCP:', error);
+        console.error('⚠️  MCP initialization failed (expected on Vercel):', error.message);
+        // On Vercel, analytics-mcp won't be available - this is expected
+        if (process.env.VERCEL_URL) {
+            console.log('Running on Vercel - MCP not required for OAuth flow');
+        }
         return false;
     }
 }
@@ -214,17 +220,36 @@ app.get('/auth/google/callback', async (req, res) => {
             refresh_token: tokens.refresh_token,
             token: tokens.access_token  // Current access token
         };
-        fs.writeFileSync(USER_CREDS_PATH, JSON.stringify(credsObj, null, 2));
 
-        // Reinitialize MCP with new credentials
+        try {
+            fs.writeFileSync(USER_CREDS_PATH, JSON.stringify(credsObj, null, 2));
+            console.log('Credentials written to:', USER_CREDS_PATH);
+        } catch (writeError) {
+            console.warn('Could not write credentials file (expected on Vercel):', writeError.message);
+            // On Vercel, file write fails, but we can still use the token directly
+            process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON = JSON.stringify(credsObj);
+        }
+
+        // Reinitialize MCP with new credentials (non-fatal if it fails)
         console.log('Reinitializing MCP with new user credentials...');
-        await closeMCP();
-        await initializeMCP();
+        try {
+            await closeMCP();
+            const mcpReady = await initializeMCP();
+            if (mcpReady) {
+                console.log('✅ MCP reinitialized with new credentials');
+            } else {
+                console.log('⚠️  MCP not available, but OAuth succeeded');
+            }
+        } catch (mcpError) {
+            console.warn('MCP reinitialization failed:', mcpError.message);
+            // Don't fail the OAuth flow if MCP isn't available
+        }
 
         res.redirect('/');
     } catch (error) {
-        console.error('OAuth callback error:', error);
-        res.status(500).json({ error: 'Authentication failed' });
+        console.error('OAuth callback error:', error.message);
+        console.error('Error details:', error);
+        res.status(500).json({ error: 'Authentication failed: ' + error.message });
     }
 });
 
